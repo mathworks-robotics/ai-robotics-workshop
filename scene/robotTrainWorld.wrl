@@ -1,0 +1,85 @@
+#VRML V2.0 utf8
+
+DEF course Transform {
+  children Shape {
+    appearance Appearance {
+      texture ImageTexture {
+        url "texture/course.png" 
+      }
+      material Material {
+      }
+    }
+    geometry Box {
+      size 1.4143 1 0.01
+    }
+  }
+}
+DEF robot Transform {
+  translation 0 0 0.035
+  rotation 0 0 0 0
+  bboxCenter 0 0 0.035
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 0.6 1 0.4
+        }
+      }
+      geometry Box {
+        size 0.14 0.09 0.07
+      }
+    }
+    DEF camera Transform {
+      translation 0.05 0 0.09
+      # R = Rz(-pi/2) * Rx(pi/3)
+      rotation 0.4472 -0.4472 -0.7746 1.8235
+      children [
+        Shape {
+          appearance Appearance {
+            material Material {
+            }
+          }
+          geometry Box {
+            size 0.03 0.03 0.01
+          }
+        }
+        DEF robotCamera Viewpoint {
+          position 0 0 -0.006
+        }
+      ]
+    }
+  ]
+}
+DEF course2 Transform {
+  translation 0 0 10
+  children Shape {
+    appearance Appearance {
+      texture ImageTexture {
+        url "texture/course_circle.png" 
+      }
+      material Material {
+      }
+    }
+    geometry Box {
+      size 1.4143 1 0.01
+    }
+  }
+}
+DEF course3 Transform {
+  translation 0 0 20
+  children Shape {
+    appearance Appearance {
+      texture ImageTexture {
+        url "texture/course_curve.png" 
+      }
+      material Material {
+      }
+    }
+    geometry Box {
+      size 1.4143 1 0.01
+    }
+  }
+}
+DEF worldCamera Viewpoint {
+  position 0 0 2
+}

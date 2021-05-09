@@ -1,0 +1,9 @@
+<library path="lib/libline_detector">
+	<class name="line_detector/line_detector" 
+		type="line_detector::LineDetectorNodelet"
+		base_class_type="nodelet::Nodelet">
+		<description>
+			Nodelet to detect line in sensor_msgs/Image
+		</description>
+	</class>
+</library>

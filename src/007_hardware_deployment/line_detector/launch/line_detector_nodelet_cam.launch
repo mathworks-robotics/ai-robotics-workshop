@@ -1,0 +1,18 @@
+<launch>
+<!-- Uncomment this if you want to use another path to the weights for the inference.
+<env name="USER_DL_DATA_PATH" value="/home/nvidia/yolov2_detect/src"/>
+-->
+<node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
+
+<node pkg="nodelet" type="nodelet" name="line_detector"
+args="load line_detector/line_detector nodelet_manager" output="screen">
+</node>
+
+<node pkg="nodelet" type="nodelet" name="uvc_camera" 
+args="load uvc_camera/CameraNodelet nodelet_manager" output="screen">
+    <param name="width" type="int" value="320" />
+    <param name="height" type="int" value="240" />
+</node>
+
+</launch>
+

@@ -1,0 +1,27 @@
+<launch>
+<!-- Uncomment this if you want to use another path to the weights for the inference.
+<env name="USER_DL_DATA_PATH" value="/home/jetbot/line_detection/src"/>
+-->
+<node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" output="screen"/>
+
+<node pkg="nodelet" type="nodelet" name="line_detector"
+args="load line_detector/line_detector nodelet_manager" output="screen">
+</node>
+
+<node pkg="nodelet" type="nodelet" name="main_camera" args="load jetson_camera/JetsonCameraNodelet nodelet_manager" clear_params="true">
+        <param name="cap_width" value="320"/>
+        <param name="cap_height" value="180"/>
+        <param name="width" value="320"/>
+        <param name="height" value="180"/>
+        <param name="fps" value="60"/>
+        <param name="frame_id" value="main_camera_optical"/>
+        <param name="camera_info_url" value="file://$(find jetson_camera)/camera_info/raspicam_v2.yaml"/>
+	<remap from="/main_camera/image_raw" to="/image_raw"/>
+    </node>
+
+<node pkg="jetbot_ros" type="jetbot_motors.py" name="jetbot_motors" output="screen" cwd="node"/>
+
+<node pkg="ros_line_follower" type="ros_line_follower_node" name="ros_line_follower_node" output="screen" cwd="node"/>
+
+</launch>
+

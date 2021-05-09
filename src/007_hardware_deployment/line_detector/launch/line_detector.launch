@@ -1,0 +1,11 @@
+<launch>
+<!-- Uncomment this if you want to use another path to the weights for the inference.
+<env name="USER_DL_DATA_PATH" value="/home/nvidia/yolov2_detect/src"/>
+-->
+<node pkg="line_detector" type="line_detector" name="line_detector" output="screen" cwd="node"/>
+
+<node pkg="jetbot_ros" type="jetbot_camera" name="jetbot_camera" output="screen" cwd="node">
+<remap from="/jetbot_camera/raw" to="/image_raw"/>
+</node>
+
+</launch>

@@ -1,0 +1,296 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index ca5e637..bfb9fd7 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,0 +15 @@ find_package(catkin REQUIRED COMPONENTS
++  image_transport
+diff --git a/package.xml b/package.xml
+index f6f3aed..b3394af 100644
+--- a/package.xml
++++ b/package.xml
+@@ -54,0 +55 @@
++  <build_depend>image_transport</build_depend>
+@@ -60,0 +62 @@
++  <exec_depend>image_transport</exec_depend>
+diff --git a/scripts/jetbot_motors.py b/scripts/jetbot_motors.py
+index b2a415f..7436794 100755
+--- a/scripts/jetbot_motors.py
++++ b/scripts/jetbot_motors.py
+@@ -3,0 +4 @@ import time
++import re
+@@ -8 +9,20 @@ from std_msgs.msg import String
+-
++ref_time = 0;
++
++def watchdog(event):
++        global ref_time
++        if event.current_real - ref_time  > rospy.Duration.from_sec(1):
++                all_stop()
++        
++# avoid error in use of float()
++def is_float(n):
++	try:
++		float(n)
++	except ValueError:
++		try:
++			int(n)
++		except ValueError:
++			return 0
++		else:
++			return int(n)
++	else:
++		return float(n)
+@@ -39,0 +60,2 @@ def all_stop():
++def shutdownhook():
++        all_stop()
+@@ -42,0 +65,2 @@ def on_cmd_dir(msg):
++        global ref_time
++        ref_time = rospy.Time.now()
+@@ -46,0 +71,2 @@ def on_cmd_raw(msg):
++        global ref_time
++        ref_time = rospy.Time.now()
+@@ -47,0 +74,9 @@ def on_cmd_raw(msg):
++    	raw_cmd_param = re.split('[,| ]', msg.data) # "speed [-1.0, 1.0]" -> ["speed","-1.0","1.0"]
++
++	if raw_cmd_param[0] != "speed[":
++		rospy.logerror(rospy.get_caller_id() + ' invalid cmd_str=%s', msg.data)
++	else:
++		set_speed(motor_left_ID,   is_float(raw_cmd_param[1]))
++		set_speed(motor_right_ID,  is_float(raw_cmd_param[2]))
++    	# 10/2/2019 tokamoto end
++
+@@ -50,0 +86,2 @@ def on_cmd_str(msg):
++        global ref_time
++        ref_time = rospy.Time.now()
+@@ -88,0 +126 @@ if __name__ == '__main__':
++        ref_time = rospy.Time.now()
+@@ -91,0 +130,2 @@ if __name__ == '__main__':
++        rospy.Timer(rospy.Duration.from_sec(0.2), watchdog)
++        rospy.on_shutdown(shutdownhook)
+diff --git a/src/jetbot_camera.cpp b/src/jetbot_camera.cpp
+index 001b525..a5cc3f6 100644
+--- a/src/jetbot_camera.cpp
++++ b/src/jetbot_camera.cpp
+@@ -27,0 +24,2 @@
++#include <image_transport/image_transport.h>
++
+@@ -28,0 +27 @@
++#include <jetson-utils/cudaNormalize.h>
+@@ -40 +36,0 @@ ros::Publisher* camera_pub = NULL;
+-
+@@ -44,29 +40,7 @@ bool aquireFrame()
+-	float4* imgRGBA = NULL;
+-
+-	// get the latest frame
+-	if( !camera->CaptureRGBA((float**)&imgRGBA, 1000) )
+-	{
+-		ROS_ERROR("failed to capture camera frame");
+-		return false;
+-	}
+-
+-	// assure correct image size
+-	if( !camera_cvt->Resize(camera->GetWidth(), camera->GetHeight(), IMAGE_RGBA32F) )
+-	{
+-		ROS_ERROR("failed to resize camera image converter");
+-		return false;
+-	}
+-
+-	// populate the message
+-	sensor_msgs::Image msg;
+-
+-	if( !camera_cvt->Convert(msg, imageConverter::ROSOutputFormat, imgRGBA) )
+-	{
+-		ROS_ERROR("failed to convert camera frame to sensor_msgs::Image");
+-		return false;
+-	}
+-
+-	// publish the message
+-	camera_pub->publish(msg);
+-	ROS_INFO("published camera frame");
+-	return true;
++float4* imgRGBA = NULL;
++
++// get the latest frame
++if( !camera->CaptureRGBA((float**)&imgRGBA, 1000) )
++{
++	ROS_ERROR("failed to capture camera frame");
++	return false;
+@@ -74,0 +49,21 @@ bool aquireFrame()
++// assure correct image size
++if( !camera_cvt->Resize(camera->GetWidth(), camera->GetHeight(), IMAGE_RGBA32F) )
++{
++	ROS_ERROR("failed to resize camera image converter");
++	return false;
++}
++
++// populate the message
++sensor_msgs::Image msg;
++
++if( !camera_cvt->Convert(msg, imageConverter::ROSOutputFormat, imgRGBA) )
++{
++	ROS_ERROR("failed to convert camera frame to sensor_msgs::Image");
++	return false;
++}
++
++// publish the message
++camera_pub->publish(msg);
++ROS_INFO("published camera frame");
++return true;
++}
+@@ -79,68 +74,42 @@ int main(int argc, char **argv)
+-	ros::init(argc, argv, "jetbot_camera");
+- 
+-	ros::NodeHandle nh;
+-	ros::NodeHandle private_nh("~");
+-
+-	/*
+-	 * retrieve parameters
+-	 */
+-	std::string camera_device = "0";	// MIPI CSI camera by default
+-
+-	private_nh.param<std::string>("device", camera_device, camera_device);
+-	
+-	ROS_INFO("opening camera device %s", camera_device.c_str());
+-
+-	
+-	/*
+-	 * open camera device
+-	 */
+-	camera = gstCamera::Create(camera_device.c_str());
+-
+-	if( !camera )
+-	{
+-		ROS_ERROR("failed to open camera device %s", camera_device.c_str());
+-		return 0;
+-	}
+-
+-
+-	/*
+-	 * create image converter
+-	 */
+-	camera_cvt = new imageConverter();
+-
+-	if( !camera_cvt )
+-	{
+-		ROS_ERROR("failed to create imageConverter");
+-		return 0;
+-	}
+-
+-
+-	/*
+-	 * advertise publisher topics
+-	 */
+-	ros::Publisher camera_publisher = private_nh.advertise<sensor_msgs::Image>("raw", 2);
+-	camera_pub = &camera_publisher;
+-
+-
+-	/*
+-	 * start the camera streaming
+-	 */
+-	if( !camera->Open() )
+-	{
+-		ROS_ERROR("failed to start camera streaming");
+-		return 0;
+-	}
+-
+-
+-	/*
+-	 * start publishing video frames
+-	 */
+-	while( ros::ok() )
+-	{
+-		//if( raw_pub->getNumSubscribers() > 0 )
+-			aquireFrame();
+-
+-		ros::spinOnce();
+-	}
+-
+-	delete camera;
++ros::init(argc, argv, "jetbot_camera");
++
++ros::NodeHandle nh;
++ros::NodeHandle private_nh("~");
++
++/*
++ * retrieve parameters
++ */
++std::string camera_device = "0";	// MIPI CSI camera by default
++// width and height should be of uint32_t, but XML supports signed integers only
++int width = 320, height = 180;	
++//int width = 1280, height = 720;
++float framerate = 30.0;
++
++private_nh.param<std::string>("device", camera_device, camera_device);
++private_nh.param("width", width, width);
++private_nh.param("height", height, height);
++private_nh.param("framerate", framerate, framerate);
++
++ROS_INFO("opening camera device %s @ %dx%d %ffps", camera_device.c_str(), width, height, framerate);
++
++//ROS_INFO("opening camera device %s", camera_device.c_str());
++
++
++/*
++ * open camera device
++ */
++
++videoOptions opt;
++opt.resource = camera_device;
++opt.width = width;
++opt.height = height;
++opt.frameRate = framerate;
++opt.ioType = videoOptions::INPUT;
++opt.flipMethod = videoOptions::FLIP_ROTATE_180;
++
++camera = gstCamera::Create(opt);
++//camera = gstCamera::Create(camera_device.c_str());
++
++if( !camera )
++{
++	ROS_ERROR("failed to open camera device %s", camera_device.c_str());
+@@ -149,0 +119,45 @@ int main(int argc, char **argv)
++
++/*
++ * create image converter
++ */
++camera_cvt = new imageConverter();
++
++if( !camera_cvt )
++{
++	ROS_ERROR("failed to create imageConverter");
++	return 0;
++}
++
++
++/*
++ * advertise publisher topics
++ */
++image_transport::ImageTransport it(private_nh);
++ros::Publisher camera_publisher = private_nh.advertise<sensor_msgs::Image>("raw", 2);
++camera_pub = &camera_publisher;
++
++
++/*
++ * start the camera streaming
++ */
++if( !camera->Open() )
++{
++	ROS_ERROR("failed to start camera streaming");
++	return 0;
++}
++
++
++/*
++ * start publishing video frames
++ */
++while( ros::ok() )
++{
++	//if( raw_pub->getNumSubscribers() > 0 )
++		aquireFrame();
++
++	ros::spinOnce();
++}
++
++delete camera;
++return 0;
++}

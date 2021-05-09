@@ -21,6 +21,7 @@ Requires MATLAB release R2021a or newer
 - [Deep Learning Toolbox&trade;](https://www.mathworks.com/products/deep-learning.html)
 - [Parallel Computing Toolbox&trade;](https://www.mathworks.com/products/parallel-computing.html)
 - [Robotics System Toolbox&trade;](https://www.mathworks.com/products/robotics.html)
+- [Simulink 3D Animation&trade;](https://www.mathworks.com/products/3d-animation.html)
 
 ### Hardware Deployment (*Optional*)
 

@@ -40,7 +40,7 @@ MATLAB R2021a もしくは新しいバージョンが必要です。
 ## はじめかた
 
 1. MATLABを起動する
-2. `matlab_ai_robotics_workshop.prj`を開く
+2. `ai_robotics_workshop.prj`を開く
 3. ライブスクリプトが開くのでメニューに沿って進める
 
 ## ドキュメント

@@ -41,7 +41,7 @@ Following MathWorks products and 3rd party products are additionaly rquired for 
 ## Getting Started 
 
 1. Launch MATLAB
-2. Open `matlab_ai_robotics_workshop.prj`
+2. Open `ai_robotics_workshop.prj`
 3. Follow the opened Live Script
 
 ## Documentation

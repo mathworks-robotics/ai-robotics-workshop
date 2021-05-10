@@ -1,6 +1,6 @@
 # MATLAB AI ロボティクスワークショップ
 
-[![View <MATLAB AI Robotics Workshop> on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/####-file-exchange-title)  
+[![View MATLAB AI Robotics Workshop on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://jp.mathworks.com/matlabcentral/fileexchange/91980-matlab-ai-robotics-workshop)
 
 学生やエンジニアがAIベースの自律移動ロボットをどのように開発するかを学ぶためのハンズオンコンテンツです。ディープラーニングや制御アルゴリズムを3次元シミュレーション環境を通じて直感的に学ぶことを目的にMATLAB&reg; および Simulink&reg; を使用しています。さらにオプションとして NVIDIA&reg; JetBot を使用したハードウェア接続およびスタンドアローン実装もコンテンツとして含んでいます。
 ![MATLAB AI robotics workshop demo video](doc/matlab_ai_robotics_workshop.gif)

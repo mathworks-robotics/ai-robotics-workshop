@@ -2,23 +2,46 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index ca5e637..bfb9fd7 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -14,0 +15 @@ find_package(catkin REQUIRED COMPONENTS
+@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
+   rospy
+   std_msgs
+   sensor_msgs
 +  image_transport
+ )
+ 
+ ## System dependencies are found with CMake's conventions
 diff --git a/package.xml b/package.xml
 index f6f3aed..b3394af 100644
 --- a/package.xml
 +++ b/package.xml
-@@ -54,0 +55 @@
+@@ -52,12 +52,14 @@
+   <build_depend>roscpp</build_depend>
+   <build_depend>rospy</build_depend>
+   <build_depend>std_msgs</build_depend>
 +  <build_depend>image_transport</build_depend>
-@@ -60,0 +62 @@
+   <build_export_depend>roscpp</build_export_depend>
+   <build_export_depend>rospy</build_export_depend>
+   <build_export_depend>std_msgs</build_export_depend>
+   <exec_depend>roscpp</exec_depend>
+   <exec_depend>rospy</exec_depend>
+   <exec_depend>std_msgs</exec_depend>
 +  <exec_depend>image_transport</exec_depend>
+ 
+ 
+   <!-- The export tag contains other, unspecified, tags -->
 diff --git a/scripts/jetbot_motors.py b/scripts/jetbot_motors.py
 index b2a415f..7436794 100755
 --- a/scripts/jetbot_motors.py
 +++ b/scripts/jetbot_motors.py
-@@ -3,0 +4 @@ import time
+@@ -1,11 +1,31 @@
+ #!/usr/bin/env python
+ import rospy
+ import time
 +import re
-@@ -8 +9,20 @@ from std_msgs.msg import String
+ 
+ from Adafruit_MotorHAT import Adafruit_MotorHAT
+ from std_msgs.msg import String
+ 
 -
 +ref_time = 0;
 +
@@ -40,16 +63,27 @@ index b2a415f..7436794 100755
 +			return int(n)
 +	else:
 +		return float(n)
-@@ -39,0 +60,2 @@ def all_stop():
+ 
+ 
+ # sets motor speed between [-1.0, 1.0]
+@@ -37,17 +57,34 @@ def all_stop():
+ 	motor_left.run(Adafruit_MotorHAT.RELEASE)
+ 	motor_right.run(Adafruit_MotorHAT.RELEASE)
+ 
 +def shutdownhook():
 +        all_stop()
-@@ -42,0 +65,2 @@ def on_cmd_dir(msg):
+ 
+ # directional commands (degree, speed)
+ def on_cmd_dir(msg):
 +        global ref_time
 +        ref_time = rospy.Time.now()
-@@ -46,0 +71,2 @@ def on_cmd_raw(msg):
+ 	rospy.loginfo(rospy.get_caller_id() + ' cmd_dir=%s', msg.data)
+ 
+ # raw L/R motor commands (speed, speed)
+ def on_cmd_raw(msg):
 +        global ref_time
 +        ref_time = rospy.Time.now()
-@@ -47,0 +74,9 @@ def on_cmd_raw(msg):
+ 	rospy.loginfo(rospy.get_caller_id() + ' cmd_raw=%s', msg.data)
 +    	raw_cmd_param = re.split('[,| ]', msg.data) # "speed [-1.0, 1.0]" -> ["speed","-1.0","1.0"]
 +
 +	if raw_cmd_param[0] != "speed[":
@@ -59,26 +93,55 @@ index b2a415f..7436794 100755
 +		set_speed(motor_right_ID,  is_float(raw_cmd_param[2]))
 +    	# 10/2/2019 tokamoto end
 +
-@@ -50,0 +86,2 @@ def on_cmd_str(msg):
+ 
+ # simple string commands (left/right/forward/backward/stop)
+ def on_cmd_str(msg):
 +        global ref_time
 +        ref_time = rospy.Time.now()
-@@ -88,0 +126 @@ if __name__ == '__main__':
+ 	rospy.loginfo(rospy.get_caller_id() + ' cmd_str=%s', msg.data)
+ 
+ 	if msg.data.lower() == "left":
+@@ -86,9 +123,12 @@ if __name__ == '__main__':
+ 	# setup ros node
+ 	rospy.init_node('jetbot_motors')
+ 	
 +        ref_time = rospy.Time.now()
-@@ -91,0 +130,2 @@ if __name__ == '__main__':
+ 	rospy.Subscriber('~cmd_dir', String, on_cmd_dir)
+ 	rospy.Subscriber('~cmd_raw', String, on_cmd_raw)
+ 	rospy.Subscriber('~cmd_str', String, on_cmd_str)
 +        rospy.Timer(rospy.Duration.from_sec(0.2), watchdog)
 +        rospy.on_shutdown(shutdownhook)
+ 
+ 	# start running
+ 	rospy.spin()
 diff --git a/src/jetbot_camera.cpp b/src/jetbot_camera.cpp
-index 001b525..a5cc3f6 100644
+index 001b525..fc881e3 100644
 --- a/src/jetbot_camera.cpp
 +++ b/src/jetbot_camera.cpp
-@@ -27,0 +24,2 @@
+@@ -25,125 +25,143 @@
+ #include <sensor_msgs/Image.h>
+ #include <sensor_msgs/image_encodings.h>
+ 
 +#include <image_transport/image_transport.h>
 +
-@@ -28,0 +27 @@
+ #include <jetson-utils/gstCamera.h>
 +#include <jetson-utils/cudaNormalize.h>
-@@ -40 +36,0 @@ ros::Publisher* camera_pub = NULL;
+ 
+ #include "image_converter.h"
+ 
 -
-@@ -44,29 +40,7 @@ bool aquireFrame()
+-
+-// globals	
++// globals
+ gstCamera* camera = NULL;
+ 
+ imageConverter* camera_cvt = NULL;
+ ros::Publisher* camera_pub = NULL;
+ 
+-
+ // aquire and publish camera frame
+ bool aquireFrame()
+ {
 -	float4* imgRGBA = NULL;
 -
 -	// get the latest frame
@@ -115,14 +178,15 @@ index 001b525..a5cc3f6 100644
 +{
 +	ROS_ERROR("failed to capture camera frame");
 +	return false;
-@@ -74,0 +49,21 @@ bool aquireFrame()
++}
++
 +// assure correct image size
 +if( !camera_cvt->Resize(camera->GetWidth(), camera->GetHeight(), IMAGE_RGBA32F) )
 +{
 +	ROS_ERROR("failed to resize camera image converter");
 +	return false;
-+}
-+
+ }
+ 
 +// populate the message
 +sensor_msgs::Image msg;
 +
@@ -137,7 +201,10 @@ index 001b525..a5cc3f6 100644
 +ROS_INFO("published camera frame");
 +return true;
 +}
-@@ -79,68 +74,42 @@ int main(int argc, char **argv)
+ 
+ // node main loop
+ int main(int argc, char **argv)
+ {
 -	ros::init(argc, argv, "jetbot_camera");
 - 
 -	ros::NodeHandle nh;
@@ -248,7 +315,9 @@ index 001b525..a5cc3f6 100644
 +if( !camera )
 +{
 +	ROS_ERROR("failed to open camera device %s", camera_device.c_str());
-@@ -149,0 +119,45 @@ int main(int argc, char **argv)
++	return 0;
++}
++
 +
 +/*
 + * create image converter
@@ -276,9 +345,9 @@ index 001b525..a5cc3f6 100644
 +if( !camera->Open() )
 +{
 +	ROS_ERROR("failed to start camera streaming");
-+	return 0;
-+}
-+
+ 	return 0;
+ }
+ 
 +
 +/*
 + * start publishing video frames

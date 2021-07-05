@@ -111,6 +111,15 @@ end
         vr = vLin + d*vAng/2;
         [wlCmd, wrCmd] = vel2cmd(vl,vr);
         
+        % Change rotation direction forward/reverse
+        % wlCmd = -wlCmd;
+        % wrCmd = -wrCmd;
+        
+        % Swap wheels side to side
+        % tmp = wlCmd;
+        % wlCmd = wrCmd;
+        % wrCmd = tmp;
+        
         strMsg.Data = "speed[ " + wlCmd + "," + wrCmd +" ]";
         send(velPub,strMsg);
         

@@ -10,6 +10,21 @@ index ca5e637..bfb9fd7 100644
  )
  
  ## System dependencies are found with CMake's conventions
+diff --git a/launch/jetbot_ros.launch b/launch/jetbot_ros.launch
+new file mode 100644
+index 0000000..a481176
+--- /dev/null
++++ b/launch/jetbot_ros.launch
+@@ -0,0 +1,9 @@
++<launch>
++
++<node pkg="jetbot_ros" type="jetbot_camera" name="jetbot_camera" output="screen" cwd="node">
++<remap from="/jetbot_camera/raw" to="/image_raw"/>
++</node>
++
++<node pkg="jetbot_ros" type="jetbot_motors.py" name="jetbot_motors" output="screen" cwd="node"/>
++
++</launch>
 diff --git a/package.xml b/package.xml
 index f6f3aed..b3394af 100644
 --- a/package.xml

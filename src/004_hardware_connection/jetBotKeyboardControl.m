@@ -76,6 +76,8 @@ while ~any(strcmp(pressedKeys,'q')) && ishandle(hFig)
     % Subscribe image
     imMsg = receive(camSub);
     I = rosReadImage(imMsg);
+    %I = imrotate(I,180);
+    
     %pos = predict(handles.trainedNet,I);
     %pos = (pos + 1) .* (320/2);
     %Iout = insertShape(I, 'FilledCircle', [pos 5],'Color','Green');

@@ -11,6 +11,9 @@ end
 
 % Convert image data format OpenCV BGR to MATLAB compatible RGB image format
 img = ocv2mat(I);
+
+%img = imrotate(img,180);
+
 sz = size(img);
 sizeWH = sz([2 1]);
 
